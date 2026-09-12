@@ -68,7 +68,7 @@ export function AppSidebar({ user, conversations }: AppSidebarProps) {
     href === "/dashboard" ? pathname === href : pathname.startsWith(href);
 
   return (
-    <Sidebar className='text-accent/60 ' collapsible='icon'>
+    <Sidebar className='text-accent/60  ' collapsible='icon'>
       <SidebarHeader>
         <div className='flex items-center justify-between px-2 py-1.5'>
           <Link href='/dashboard' className='flex items-center gap-2'>
@@ -156,8 +156,12 @@ export function AppSidebar({ user, conversations }: AppSidebarProps) {
                 <DropdownMenuItem
                   className='cursor-pointer'
                   onClick={async () => {
-                    await signOut();
-                    window.location.href = "/sign-in";
+                    try {
+                      await signOut();
+                      router.push("/sign-in");
+                    } catch {
+                      router.push("/sign-in");
+                    }
                   }}
                 >
                   <LogOut />

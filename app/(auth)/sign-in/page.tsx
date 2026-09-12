@@ -3,7 +3,7 @@
 import { signIn } from "@/lib/auth-client";
 import Image from "next/image";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import {  useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -19,31 +19,35 @@ export default function SignInPage() {
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>();
 
+  const router = useRouter();
+
   async function onSubmit(data: SignInFormData) {
-    const result = await signIn.email({
-      email: data.email,
-      password: data.password,
-    });
+    try {
+      const result = await signIn.email({
+        email: data.email,
+        password: data.password,
+      });
 
-    if (result.error) {
-      toast.error(result.error.message);
-      return;
+      if (result.error) {
+        toast.error(result.error.message);
+        return;
+      }
+
+      toast.success("Welcome back");
+      router.push("/dashboard");
+    } catch {
+      toast.error(
+        "Unable to connect. Please check your internet connection and try again.",
+      );
     }
-
-    toast.success("Welcome back");
-    redirect("/dashboard");
   }
-
   return (
     <main className='min-h-screen bg-white'>
       <div className='grid min-h-screen lg:grid-cols-2'>
         {/* Left — Brand / Message */}
         <section className='relative hidden overflow-hidden bg-neutral-950 px-12 py-12 text-white lg:flex lg:flex-col lg:justify-between'>
           <div>
-            <Link
-              href='/'
-              className='flex items-center gap-2 px-2 py-1.5'
-            >
+            <Link href='/' className='flex items-center gap-2 px-2 py-1.5'>
               <span className='flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground'>
                 k
               </span>
@@ -86,7 +90,7 @@ export default function SignInPage() {
 
             <div className='mb-10'>
               <h2 className='text-3xl font-semibold tracking-tight text-neutral-950'>
-                Create your account
+                Sign in to your account{" "}
               </h2>
 
               <p className='mt-2 text-sm text-neutral-500'>
@@ -97,10 +101,16 @@ export default function SignInPage() {
             <button
               type='button'
               onClick={async () => {
-                await signIn.social({
-                  provider: "google",
-                  callbackURL: "/dashboard",
-                });
+                try {
+                  await signIn.social({
+                    provider: "google",
+                    callbackURL: "/dashboard",
+                  });
+                } catch {
+                  toast.error(
+                    "Unable to connect. Please check your internet connection and try again.",
+                  );
+                }
               }}
               className='h-12 my-4 w-full rounded-lg cursor-pointer border border-neutral-200 bg-white text-sm font-medium text-neutral-900 transition hover:bg-neutral-50'
             >
@@ -171,7 +181,7 @@ export default function SignInPage() {
                   id='password'
                   type='password'
                   placeholder='Create a password'
-                  autoComplete='new-password'
+                  autoComplete='current-password'
                   className={`h-12 w-full rounded-lg border text-gray-800 bg-white px-4 text-sm outline-none transition placeholder:text-neutral-400 focus:ring-1 ${
                     errors.password
                       ? "border-red-500 focus:border-red-500 focus:ring-red-500"
