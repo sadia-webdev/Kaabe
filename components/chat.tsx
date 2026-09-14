@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useChat } from "@ai-sdk/react";
-import { UIMessage } from "ai";
+import { DefaultChatTransport, UIMessage } from "ai";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -27,7 +27,9 @@ export default function Chat({
 
   const { messages, sendMessage } = useChat({
     messages: initialMessages,
-    api,
+    transport: new DefaultChatTransport({
+      api,
+    }),
   });
 
   return (

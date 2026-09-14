@@ -93,6 +93,8 @@ export async function POST(request: Request) {
 
   const results = await searchDocuments(textPart.text, currentBusiness.id);
 
+
+
   const context = results
     .map((result) => result.metadata?.text)
     .filter(Boolean)
