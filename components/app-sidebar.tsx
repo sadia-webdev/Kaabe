@@ -53,7 +53,7 @@ type AppSidebarProps = {
   conversations: {
     id: string;
     title: string;
-    userId: string;
+    userId: string | null;
     createdAt: Date;
     updatedAt: Date;
   }[];
