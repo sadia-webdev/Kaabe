@@ -14,6 +14,9 @@ export const auth = betterAuth({
     provider: "pg",
     schema,
   }),
+
+  trustedOrigins: ["http://localhost:3000", "https://kaabe-three.vercel.app"],
+  
   socialProviders: {
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID as string,
@@ -24,5 +27,3 @@ export const auth = betterAuth({
   },
   plugins: [nextCookies()],
 });
-
-
