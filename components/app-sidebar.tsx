@@ -71,7 +71,7 @@ export function AppSidebar({ user, conversations }: AppSidebarProps) {
     <Sidebar className='text-accent/60  ' collapsible='icon'>
       <SidebarHeader>
         <div className='flex items-center justify-between px-2 py-1.5'>
-          <Link href='/dashboard' className='flex items-center gap-2'>
+          <Link href='/' className='flex items-center gap-2'>
             <span className='flex size-6 shrink-0 items-center justify-center rounded-md bg-sidebar-primary text-xs font-semibold text-sidebar-primary-foreground'>
               k
             </span>

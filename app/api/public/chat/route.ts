@@ -1,42 +1,21 @@
 import { db } from "@/db/drizzle";
 import { business, conversation, message } from "@/db/schema";
-import { auth } from "@/lib/auth";
 import { searchDocuments } from "@/lib/search";
-import { google } from "@ai-sdk/google";
 import { convertToModelMessages, streamText, UIMessage } from "ai";
-import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { google } from "@ai-sdk/google";
 
-const maxDuration = 30;
+import { eq } from "drizzle-orm";
 
 export async function POST(request: Request) {
   const {
     messages,
+    slug,
     conversationId,
   }: {
     messages: UIMessage[];
+    slug: string;
     conversationId?: string;
   } = await request.json();
-
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session?.user) {
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const businessResult = await db
-    .select()
-    .from(business)
-    .where(eq(business.userId, session.user.id))
-    .limit(1);
-
-  if (businessResult.length === 0) {
-    return new Response("Business not found", { status: 404 });
-  }
-
-  const currentBusiness = businessResult[0];
 
   const latestMessage = messages[messages.length - 1];
 
@@ -46,6 +25,28 @@ export async function POST(request: Request) {
     return new Response("Invalid user message", { status: 400 });
   }
 
+  if (!slug || !textPart.text) {
+    return new Response("Slug and message are required", {
+      status: 400,
+    });
+  }
+
+  // 1. Find the business using its public slug
+  const businessResult = await db
+    .select()
+    .from(business)
+    .where(eq(business.slug, slug))
+    .limit(1);
+
+  if (businessResult.length === 0) {
+    return new Response("Business not found", {
+      status: 404,
+    });
+  }
+
+  const currentBusiness = businessResult[0];
+
+  // 2. Find existing conversation
   let currentConversation;
 
   if (conversationId) {
@@ -58,42 +59,36 @@ export async function POST(request: Request) {
     if (conversationResult.length > 0) {
       currentConversation = conversationResult[0];
 
-      // Conversation exists, but belongs to another user
-      if (
-        currentConversation.userId !== session.user.id ||
-        currentConversation.businessId !== currentBusiness.id
-      ) {
-        return new Response("Forbidden", { status: 403 });
+      // Make sure this conversation belongs to this business
+      if (currentConversation.businessId !== currentBusiness.id) {
+        return new Response("Forbidden", {
+          status: 403,
+        });
       }
-    } else {
-      // Conversation does not exist → create it
-      const title = textPart.text.slice(0, 50);
-
-      const newConversation = await db
-        .insert(conversation)
-        .values({
-          id: conversationId,
-          title,
-          userId: session.user.id,
-          businessId: currentBusiness.id,
-        })
-        .returning();
-
-      currentConversation = newConversation[0];
     }
   }
 
+  // 3. Create anonymous conversation if needed
   if (!currentConversation) {
-    return new Response("Conversation not found", { status: 404 });
+    const newConversation = await db
+      .insert(conversation)
+      .values({
+        id: conversationId ?? crypto.randomUUID(),
+        title: textPart.text.slice(0, 50),
+        userId: null,
+        businessId: currentBusiness.id,
+      })
+      .returning();
+
+    currentConversation = newConversation[0];
   }
 
-  // Save the user's message
   await db.insert(message).values({
     id: crypto.randomUUID(),
     content: textPart.text,
-    role: latestMessage.role,
+    role: "user",
     conversationId: currentConversation.id,
-    userId: session.user.id,
+    userId: null,
   });
 
   const results = await searchDocuments(textPart.text, currentBusiness.id);
@@ -103,18 +98,21 @@ export async function POST(request: Request) {
     .filter(Boolean)
     .join("\n\n");
 
-  const modelMessages = await convertToModelMessages(messages);
+
+    const modelMessages = await convertToModelMessages(messages);
+
 
   const result = await streamText({
     model: google("gemini-2.5-flash"),
 
-    system: `You are a helpful AI assistant for a business.
+    system: `You are a helpful AI assistant for ${currentBusiness.name}.
 
-Answer the user's question using the business information provided below.
+Answer the customer's question using only the business information provided below.
 
 If the answer is not contained in the business information, say you don't have that information. Do not make up facts.
 
 Business information:
+
 ${context}`,
 
     messages: modelMessages,
@@ -127,7 +125,7 @@ ${context}`,
     content: responseText,
     role: "assistant",
     conversationId: currentConversation.id,
-    userId: session.user.id,
+    userId: null,
   });
 
   return result.toUIMessageStreamResponse();

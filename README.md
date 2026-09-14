@@ -1,8 +1,8 @@
-# 🤖 Kaabe AI Assistant for Somali Businesses
+# 🤖 Kaabe — AI Assistant for Somali Businesses
 
 Kaabe is a SaaS-style AI assistant designed for Somali businesses.
 
-It allows a business owner to upload their business knowledge, then uses **Retrieval-Augmented Generation (RAG)** to answer customer questions based on that information.
+A business owner can create their business, upload business knowledge, and give customers a public AI assistant that answers questions using the business's own information.
 
 > **Product vision:** An AI employee that knows one business and answers that business's customers.
 
@@ -10,97 +10,165 @@ It allows a business owner to upload their business knowledge, then uses **Retri
 
 ## 🎯 Project Goal
 
-The goal of Kaabe is to build an AI assistant that can:
+Kaabe is built to help businesses provide an AI-powered customer support experience based on their own knowledge.
 
-- Learn from a business's documents
-- Retrieve relevant information when a customer asks a question
-- Generate grounded answers using that information
-- Support multiple businesses securely
-- Store conversations and messages
-- Provide a dashboard for managing the business knowledge and conversations
+The system can:
 
-The current project focuses on implementing and demonstrating the **RAG pipeline**.
+- Create and manage a business
+- Generate a unique public business URL
+- Upload business documents
+- Extract and chunk document content
+- Generate embeddings
+- Store vectors in Pinecone
+- Retrieve business-specific information using RAG
+- Answer customer questions using Gemini
+- Support authenticated business-owner chat
+- Support anonymous public customer chat
+- Persist conversations and messages
+- Keep businesses isolated from one another
+- Provide business analytics through the dashboard
+
+The current MVP focuses on building a secure, multi-tenant RAG system that connects a business's knowledge base directly to its customers.
 
 ---
+
+
+
+
+
+## 🎥 Demo
+
+Kaabe provides a complete AI customer-support workflow for businesses — from business onboarding and knowledge management to customer conversations.
+
+### 🏠 Landing Page
+
+The Kaabe landing page introduces the platform and allows businesses to get started or try a public assistant.
+
+![Kaabe Landing Page](public/landing-page.png)
+
+### 📊 Business Dashboard
+
+Business owners can manage their AI assistant, monitor conversations, view knowledge documents, and track activity.
+
+![Kaabe Dashboard](public/dashboard.png)
+
+### 📚 Knowledge Base
+
+Businesses can upload their own knowledge and use it as the foundation for their AI assistant.
+
+![Kaabe Knowledge Base](public/knowledge-base.png)
+
+### 💬 Public AI Assistant
+
+Every business receives a unique public assistant URL. Customers can ask questions without creating an account.
+
+![Kaabe Public Assistant](public/chat.png)
+
+### 🔗 Example Public Assistants
+
+
+The assistant retrieves information specifically from the selected business's knowledge base, keeping each business's data isolated.
+
+
+
+
 
 ## 🏗️ Architecture
 
 ```text
-                    ┌─────────────────┐
-                    │  Business Owner │
-                    └────────┬────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │  Authentication  │
-                    │   Better Auth   │
-                    └────────┬────────┘
-                             │
-                             ▼
-                    ┌─────────────────┐
-                    │    Dashboard    │
-                    └────────┬────────┘
-                             │
-                ┌────────────┴────────────┐
-                │                         │
-                ▼                         ▼
-       ┌─────────────────┐       ┌─────────────────┐
-       │  Knowledge Base │       │      Chat       │
-       └────────┬────────┘       └────────┬────────┘
-                │                         │
-                ▼                         ▼
-       ┌─────────────────┐       ┌─────────────────┐
-       │ PDF Extraction  │       │ Embed Question  │
-       └────────┬────────┘       └────────┬────────┘
-                │                         │
-                ▼                         ▼
-       ┌─────────────────┐       ┌─────────────────┐
-       │    Chunking     │       │    Pinecone     │
-       │   LangChain     │       │ Similarity      │
-       └────────┬────────┘       │    Search       │
-                │                └────────┬────────┘
-                ▼                         │
-       ┌─────────────────┐                │
-       │ Gemini Embedding│                │
-       └────────┬────────┘                │
-                │                         │
-                ▼                         ▼
-       ┌─────────────────────────────────────────┐
-       │              Pinecone                   │
-       │          Vector Database                │
-       └────────────────────┬────────────────────┘
+                         ┌─────────────────────┐
+                         │   Business Owner    │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │   Authentication    │
+                         │     Better Auth     │
+                         └──────────┬──────────┘
+                                    │
+                                    ▼
+                         ┌─────────────────────┐
+                         │      Dashboard      │
+                         └──────────┬──────────┘
+                                    │
+                    ┌───────────────┼───────────────┐
+                    │               │               │
+                    ▼               ▼               ▼
+             ┌────────────┐ ┌────────────┐ ┌────────────┐
+             │  Knowledge │ │    Chat    │ │ Analytics  │
+             │    Base    │ │            │ │            │
+             └─────┬──────┘ └─────┬──────┘ └────────────┘
+                   │               │
+                   ▼               │
+             ┌────────────┐        │
+             │ PDF Loader │        │
+             └─────┬──────┘        │
+                   │               │
+                   ▼               ▼
+             ┌────────────┐ ┌──────────────┐
+             │  Chunking  │ │ Embed Query  │
+             │ LangChain  │ └──────┬───────┘
+             └─────┬──────┘        │
+                   │               ▼
+                   ▼        ┌──────────────┐
+             ┌────────────┐ │   Pinecone   │
+             │  Gemini    │ │  Similarity  │
+             │ Embeddings │ │    Search    │
+             └─────┬──────┘ └──────┬───────┘
+                   │               │
+                   ▼               ▼
+             ┌─────────────────────────────┐
+             │          Pinecone            │
+             │       Vector Database        │
+             └──────────────┬──────────────┘
                             │
                             ▼
-                   ┌─────────────────┐
-                   │ Gemini 2.5 Flash│
-                   │  + Retrieved    │
-                   │    Context      │
-                   └────────┬────────┘
+                   ┌──────────────────┐
+                   │  Gemini 2.5 Flash│
+                   │ + Retrieved      │
+                   │    Context       │
+                   └────────┬─────────┘
                             │
                             ▼
-                   ┌─────────────────┐
-                   │ Customer Answer │
-                   └─────────────────┘
+                   ┌──────────────────┐
+                   │  Customer Answer │
+                   └──────────────────┘
 
 ```
 
 ---
 
+
+
 ## 🔄 RAG Pipeline
 
-Kaabe uses Retrieval-Augmented Generation to answer questions using business-specific knowledge.
+Kaabe uses **Retrieval-Augmented Generation (RAG)** to answer questions using business-specific knowledge.
 
 ### 1. Upload
 
-A business owner uploads a PDF containing business information.
+A business owner uploads a document containing information about their business.
+
+Currently supported:
+
+- PDF
+- TXT
+- Markdown
+- DOCX
+
+
 
 ### 2. Extract
 
-The PDF content is extracted using LangChain's `PDFLoader`.
+PDF documents are processed using LangChain's `PDFLoader`.
 
 ### 3. Chunk
 
-The extracted content is split into smaller chunks using `RecursiveCharacterTextSplitter`.
+The extracted content is split into smaller pieces using:
+
+```text
+RecursiveCharacterTextSplitter
+
+```
 
 Current configuration:
 
@@ -110,16 +178,25 @@ chunkOverlap: 200
 
 ```
 
+
+
 ### 4. Embed
 
-Each chunk is converted into a vector using Google's:
+Each chunk is converted into a vector using:
 
 ```text
 gemini-embedding-001
 
 ```
 
-The embeddings use a **3072-dimensional vector space**.
+The embeddings use a:
+
+```text
+3072-dimensional vector space
+
+```
+
+
 
 ### 5. Store
 
@@ -132,7 +209,7 @@ text
 
 ```
 
-The metadata allows retrieval to be restricted to the current business.
+The `businessId` is critical for multi-business data isolation.
 
 ### 6. Retrieve
 
@@ -141,36 +218,151 @@ When a customer asks a question:
 1. The question is embedded.
 2. Pinecone performs a similarity search.
 3. The search is filtered by `businessId`.
-4. Only sufficiently relevant results are returned.
+4. The most relevant chunks are returned.
+5. Results below the relevance threshold are discarded.
 
-The current implementation uses a similarity threshold of:
+Current similarity threshold:
 
 ```text
 0.70
 
 ```
 
+
+
 ### 7. Generate
 
 The retrieved context is provided to Gemini 2.5 Flash.
 
-Gemini generates an answer based on the retrieved business information.
-
-If relevant information cannot be retrieved, the assistant does not invent an answer.
+The model is instructed to answer using the retrieved business information and avoid inventing information that is not present in the knowledge base.
 
 ---
 
-## 💬 Example
 
-For the test business **Sahal Restaurant**, the knowledge base contains information such as:
 
-- Menu items
+## 🏢 Multi-Business Architecture
+
+Kaabe is designed as a multi-tenant application.
+
+Each business has its own:
+
+```text
+Business
+   │
+   ├── slug
+   ├── documents
+   ├── conversations
+   └── knowledge vectors
+
+```
+
+Every vector stored in Pinecone contains the business identifier.
+
+For example:
+
+```text
+Sahal Restaurant
+businessId = business_123
+
+Hodan Pharmacy
+businessId = business_456
+
+```
+
+A search for Sahal Restaurant can therefore only retrieve:
+
+```text
+businessId = business_123
+
+```
+
+and cannot retrieve Hodan Pharmacy's knowledge.
+
+### Business URLs
+
+Each business receives a unique slug.
+
+Examples:
+
+```text
+/chat/sahal-restaurant
+/chat/hodan-pharmacy
+
+```
+
+The slug is generated automatically from the business name.
+
+---
+
+
+
+## 🔐 Security & Data Isolation
+
+Security is an important part of Kaabe's architecture.
+
+### Authentication
+
+Better Auth protects business-owner functionality and dashboard access.
+
+### Business Ownership
+
+Authenticated business operations use the user's session rather than trusting a user ID supplied by the client.
+
+### Vector Isolation
+
+Pinecone queries are scoped using:
+
+```text
+businessId = currentBusiness.id
+
+```
+
+This prevents one business from retrieving another business's knowledge.
+
+### Conversation Isolation
+
+Owner conversations are verified against the authenticated user and their business.
+
+Public conversations are verified against the business associated with the requested slug.
+
+### Anonymous Customer Conversations
+
+Customers do not need an account to use a business assistant.
+
+Public conversations use:
+
+```text
+userId = null
+businessId = currentBusiness.id
+
+```
+
+This allows customer conversations to be stored while keeping the customer anonymous.
+
+---
+
+
+
+## 💬 Example Businesses
+
+Kaabe currently uses fictional businesses for testing.
+
+### Sahal Restaurant
+
+```text
+/chat/sahal-restaurant
+
+```
+
+Example knowledge:
+
+- Menu
 - Prices
 - Opening hours
 - Location
-- Services
-- Restaurant policies
-- Frequently asked questions
+- Restaurant services
+- Policies
+- FAQs
 
 Example question:
 
@@ -179,72 +371,45 @@ What time does Sahal Restaurant close?
 
 ```
 
-The system retrieves the relevant chunk from Pinecone and uses it to generate the answer.
 
-For information that is not present in the knowledge base:
+
+### Hodan Pharmacy
 
 ```text
-Does Sahal Restaurant have a swimming pool?
+/chat/hodan-pharmacy
 
 ```
 
-The assistant responds that it does not have information about a swimming pool rather than inventing one.
+Example knowledge:
+
+- Pharmacy information
+- Opening hours
+- Location
+- Product categories
+- Delivery
+- Payment methods
+- FAQs
+
+Example question:
+
+```text
+Farmashiyaha goorma ayuu furmaa?
+
+```
+
+The two businesses also provide a useful way to test **multi-tenant RAG isolation**.
 
 ---
 
-## 🔐 Security & Multi-Tenancy
 
-Kaabe is designed with business isolation in mind.
-
-### Authentication
-
-Better Auth protects dashboard and API access.
-
-### Business Ownership
-
-A user's business is retrieved using the authenticated user's ID rather than accepting a user ID from the client.
-
-### Vector Isolation
-
-Pinecone queries include a business filter:
-
-```text
-businessId = currentBusiness.id
-
-```
-
-This prevents retrieval from another business's knowledge.
-
-### Conversation Ownership
-
-Before using an existing conversation, the API verifies that the conversation belongs to the authenticated user.
-
-Unauthorized access returns:
-
-```text
-403 Forbidden
-
-```
-
-### Message Ownership
-
-Messages are stored with both:
-
-```text
-conversationId
-userId
-
-```
-
----
 
 ## 💾 Data Storage
 
-Kaabe uses two types of storage.
+Kaabe uses two primary data stores.
 
 ### PostgreSQL — Neon
 
-Used for application data:
+PostgreSQL stores application data such as:
 
 - Users
 - Sessions
@@ -257,16 +422,18 @@ Database access is handled through **Drizzle ORM**.
 
 ### Pinecone
 
-Used for vector data:
+Pinecone stores vector data:
 
 - Document embeddings
 - Chunk text
 - Business metadata
 - Document metadata
 
-This separation allows PostgreSQL to manage application state while Pinecone handles semantic retrieval.
+PostgreSQL manages application state while Pinecone handles semantic retrieval.
 
 ---
+
+
 
 ## 🧰 Tech Stack
 
@@ -277,11 +444,12 @@ This separation allows PostgreSQL to manage application state while Pinecone han
 | React             | User interface                   |
 | TypeScript        | Type safety                      |
 | Tailwind CSS      | Styling                          |
+| shadcn/ui         | UI components                    |
 | Better Auth       | Authentication                   |
 | PostgreSQL / Neon | Application database             |
 | Drizzle ORM       | Database queries and schema      |
 | Pinecone          | Vector database                  |
-| LangChain         | PDF processing and text chunking |
+| LangChain         | Document processing and chunking |
 | Gemini Embeddings | Text embeddings                  |
 | Gemini 2.5 Flash  | AI response generation           |
 | AI SDK            | AI/chat streaming                |
@@ -289,22 +457,33 @@ This separation allows PostgreSQL to manage application state while Pinecone han
 
 ---
 
+
+
 ## 📁 Project Structure
 
 ```text
 .
 ├── app/
 │   ├── api/
-│   │   └── chat/
-│   │       └── route.ts
+│   │   ├── chat/
+│   │   │   └── route.ts
+│   │   └── public/
+│   │       └── chat/
+│   │           └── route.ts
 │   │
-│   └── dashboard/
-│       ├── chat/
-│       ├── knowledge/
-│       ├── analytics/
-│       ├── settings/
-│       ├── error.tsx
-│       └── page.tsx
+│   ├── chat/
+│   │   └── [slug]/
+│   │       └── page.tsx
+│   │
+│   ├── dashboard/
+│   │   ├── chat/
+│   │   ├── knowledge/
+│   │   ├── analytics/
+│   │   ├── settings/
+│   │   ├── error.tsx
+│   │   └── page.tsx
+│   │
+│   └── ...
 │
 ├── components/
 │   ├── chat.tsx
@@ -334,7 +513,24 @@ This separation allows PostgreSQL to manage application state while Pinecone han
 
 ---
 
+
+
 ## ⚙️ Getting Started
+
+
+
+### Prerequisites
+
+Make sure you have:
+
+- Node.js
+- npm or pnpm
+- PostgreSQL / Neon account
+- Pinecone account
+- Google AI / Gemini API key
+- Google OAuth credentials if using Google sign-in
+
+
 
 ### 1. Clone the repository
 
@@ -344,50 +540,68 @@ cd <project-directory>
 
 ```
 
+
+
 ### 2. Install dependencies
+
+```bash
+npm install
+
+```
+
+Or:
 
 ```bash
 pnpm install
 
 ```
 
+
+
 ### 3. Configure environment variables
 
 Create a `.env.local` file:
 
 ```env
-DATABASE_URL=
-BETTER_AUTH_SECRET=
-GOOGLE_CLIENT_ID=
-GOOGLE_CLIENT_SECRET=
-GOOGLE_GENERATIVE_AI_API_KEY=
-PINECONE_API_KEY=
+DATABASE_URL=your_neon_database_url
+
+BETTER_AUTH_SECRET=your_better_auth_secret
+BETTER_AUTH_URL=http://localhost:3000
+
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+GOOGLE_GENERATIVE_AI_API_KEY=your_google_ai_api_key
+
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_INDEX=rag-documents
 
 ```
 
-Fill in the required values for:
+> Never commit `.env.local` or expose API keys in client-side code.
 
-- Neon PostgreSQL
-- Better Auth
-- Google OAuth
-- Google Gemini
-- Pinecone
 
-### 4. Run database migrations
+
+### 4. Set up the database
+
+Run the project's Drizzle commands:
 
 ```bash
-pnpm drizzle-kit migrate
+npm run db:generate
+npm run db:migrate
 
 ```
+
+Use the scripts defined in `package.json` if your local project uses different command names.
 
 ### 5. Start the development server
 
 ```bash
-pnpm dev
+npm run dev
 
 ```
 
-Then open:
+Open:
 
 ```text
 http://localhost:3000
@@ -396,96 +610,114 @@ http://localhost:3000
 
 ---
 
-## 🧪 Testing the RAG Pipeline
 
-A simple way to test the system is:
+
+## 🧪 Testing Kaabe
+
+A basic end-to-end test looks like this:
+
+### Business owner
 
 1. Create an account.
 2. Create a business.
-3. Open **Knowledge Base**.
-4. Upload a business PDF.
-5. Wait for the document to be processed.
-6. Open **Chat**.
-7. Ask questions about the uploaded business.
-8. Ask a question that is unrelated to the knowledge base and verify that the assistant does not fabricate an answer.
-9. Refresh the conversation and verify that messages persist.
+3. Verify that a business slug is generated.
+4. Open the Knowledge Base.
+5. Upload business documents.
+6. Wait for processing.
+7. Open the dashboard chat.
+8. Ask questions about the uploaded knowledge.
+9. Verify that conversations persist.
+
+
+
+### Customer
+
+1. Open the business's public URL:
+
+```text
+/chat/sahal-restaurant
+
+```
+
+1. Ask a business-related question.
+2. Ask multiple questions in the same conversation.
+3. Refresh the page and verify conversation behavior.
+
+
+
+### Multi-business isolation
+
+1. Create or use a second business:
+
+```text
+/chat/hodan-pharmacy
+
+```
+
+1. Ask questions about Hodan Pharmacy.
+2. Verify that Hodan Pharmacy does not retrieve Sahal Restaurant information.
+3. Verify that Sahal Restaurant does not retrieve Hodan Pharmacy information.
+
+
+
+### Grounding test
+
+Ask something that does not exist in the knowledge base:
+
+```text
+Does this business have a swimming pool?
+
+```
+
+The assistant should indicate that it does not have enough information instead of inventing an answer.
 
 ---
 
-## 📊 Current Features
+## 🚧 Roadmap
 
-### Authentication
 
-- Email/password authentication
-- Google authentication
-- Protected dashboard
-- Logout
 
-### Business
+### Next
 
-- Business onboarding
-- Authenticated business ownership
-- One business per user in the current MVP
+- Improve document processing status and error handling
+- Better analytics
+- Frequently asked questions
+- Unanswered question detection
+- Knowledge gaps
+- Somali + English response improvements
 
-### Knowledge Base
 
-- PDF upload
-- PDF text extraction
-- Document chunking
-- Gemini embeddings
-- Pinecone vector storage
-- Business-level metadata filtering
 
-### AI Chat
+### Future
 
-- Semantic retrieval
-- Relevance threshold
-- Gemini-powered answers
-- Streaming responses
-- Conversation persistence
-- User/assistant message persistence
-- Conversation titles
-- Previous conversation loading
-
-### Dashboard
-
-- Business overview
-- Knowledge base overview
-- Recent conversations
-- Message activity
-- Knowledge document statistics
-
----
-
-## 🚧 Future Improvements
-
-Kaabe's long-term vision includes:
-
-- Somali + English conversational support
 - WhatsApp integration
-- Business analytics
-- More knowledge formats
-- Improved retrieval and reranking
 - Source citations in responses
+- Improved retrieval and reranking
 - Business-specific AI configuration
-- Customer conversation analytics
-- Subscription and SaaS billing
-- Multiple business/team members
 - Automated knowledge updates
+- Customer satisfaction tracking
+- Multiple business/team members
+- Subscription and SaaS billing
+- Production monitoring
+- Usage limits and billing
 
 ---
 
-## 🎯 Project Vision
 
-Kaabe is being built around a simple idea:
+
+## 🎯 Product Vision
+
+Kaabe is built around one simple idea:
 
 > **Give every Somali business an AI employee that knows their business.**
 
-Instead of giving customers generic AI answers, Kaabe retrieves information from the business's own knowledge and uses it to provide relevant answers.
+Instead of giving customers generic AI answers, Kaabe retrieves information from the business's own knowledge and uses it to provide relevant, grounded answers.
 
-The long-term goal is to make this technology practical and accessible for businesses in Somalia and beyond.
+The long-term goal is to make practical AI customer support accessible to businesses in Somalia and beyond.
 
 ---
+
+
 
 ## 👩🏽‍💻 Built By
 
@@ -494,100 +726,3 @@ The long-term goal is to make this technology practical and accessible for busin
 Computer Science Student & Full-Stack / AI Developer
 
 Building practical AI products for Somali businesses.
-
-# ⚙️ Getting Started
-
-
-
-## Prerequisites
-
-Make sure you have:
-
-- Node.js
-- npm
-- PostgreSQL database
-- Neon account
-- Pinecone account
-- Google AI / Gemini API key
-
----
-
-
-
-## 1. Clone the repository
-
-```bash
-git clone <your-repository-url>
-cd <project-directory>
-```
-
----
-
-
-
-## 2. Install dependencies
-
-```bash
-npm install
-```
-
----
-
-
-
-## 3. Configure environment variables
-
-Create a `.env` file in the project root.
-
-Example:
-
-```env
-DATABASE_URL=your_neon_database_url
-
-BETTER_AUTH_SECRET=your_better_auth_secret
-BETTER_AUTH_URL=http://localhost:3000
-
-GOOGLE_GENERATIVE_AI_API_KEY=your_google_ai_api_key
-
-PINECONE_API_KEY=your_pinecone_api_key
-PINECONE_INDEX=rag-documents
-```
-
-> Never commit your `.env` file or expose API keys in client-side code.
-
-Use the project's actual environment variable names if they differ from the example above.
-
----
-
-
-
-## 4. Set up the database
-
-Run the project's Drizzle database commands:
-
-```bash
-npm run db:generate
-npm run db:migrate
-```
-
-If your local project uses different database scripts, use the commands defined in `package.json`.
-
----
-
-
-
-## 5. Start the development server
-
-```bash
-npm run dev
-```
-
-Open:
-
-```text
-http://localhost:3000
-```
-
----
-
-The next major product milestone is expanding this foundation into a complete Somali-business AI platform with analytics, multilingual support, and WhatsApp integration.

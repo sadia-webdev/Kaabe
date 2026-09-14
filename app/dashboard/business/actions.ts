@@ -2,6 +2,7 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+
 import { auth } from "@/lib/auth";
 import { db } from "@/db/drizzle";
 import { business } from "@/db/schema";
@@ -28,16 +29,26 @@ export async function createBusiness(formData: FormData) {
     throw new Error("Business name and description are required");
   }
 
-  // 5. Create the business
+  // 5. Generate slug from business name
+  const slug = name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-");
+
+  // 6. Create the business
   await db.insert(business).values({
     id: crypto.randomUUID(),
     name,
+    slug,
     description,
     phone: phone || null,
     email: email || null,
     userId: session.user.id,
   });
 
-  // 6. Send the user to the dashboard
+  // 7. Send the user to the dashboard
   redirect("/dashboard");
 }
+

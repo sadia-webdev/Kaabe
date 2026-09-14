@@ -15,7 +15,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang='en' className={poppins.variable}>
-      <body className='bg-primary text-secondary font-sans antialiased'>
+      <body className='text-secondary font-sans antialiased'>
         {children}
         <Toaster
           toastOptions={{

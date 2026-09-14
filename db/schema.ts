@@ -72,6 +72,7 @@ export const business = pgTable("business", {
   description: text("description"),
   phone: text("phone"),
   email: text("email"),
+  slug: text("slug").notNull().unique(),
   userId: text("user_id")
     .notNull()
     .unique()
@@ -102,13 +103,17 @@ export const document = pgTable("document", {
 export const conversation = pgTable("conversation", {
   id: text("id").primaryKey(),
   title: text("title").notNull(),
-  userId: text("user_id")
+
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+
+  businessId: text("business_id")
     .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+    .references(() => business.id, { onDelete: "cascade" }),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 
@@ -116,16 +121,18 @@ export const message = pgTable("message", {
   id: text("id").primaryKey(),
   content: text("content").notNull(),
   role: text("role").notNull(),
+
   conversationId: text("conversation_id")
     .notNull()
     .references(() => conversation.id, { onDelete: "cascade" }),
-  userId: text("user_id")
-    .notNull()
-    .references(() => user.id, { onDelete: "cascade" }),
+
+  userId: text("user_id").references(() => user.id, { onDelete: "cascade" }),
+
   createdAt: timestamp("created_at").defaultNow().notNull(),
+
   updatedAt: timestamp("updated_at")
     .defaultNow()
-    .$onUpdate(() => /* @__PURE__ */ new Date())
+    .$onUpdate(() => new Date())
     .notNull(),
 });
 

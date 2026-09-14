@@ -10,17 +10,25 @@ import { useState } from "react";
 type ChatProps = {
   conversationId: string;
   initialMessages: UIMessage[];
+  api?: string;
+  body?: Record<string, unknown>;
 };
 
-export default function Chat({ conversationId, initialMessages }: ChatProps) {
+export default function Chat({
+  conversationId,
+  initialMessages,
+  api = "/api/chat",
+  body = {},
+}: ChatProps) {
   const [input, setInput] = useState("");
 
   const router = useRouter();
   const [isNewChat] = useState(initialMessages.length === 0);
 
- const { messages, sendMessage } = useChat({
-  messages: initialMessages,
-});
+  const { messages, sendMessage } = useChat({
+    messages: initialMessages,
+    api,
+  });
 
   return (
     <div className='flex  min-h-screen p-12'>
@@ -63,16 +71,16 @@ export default function Chat({ conversationId, initialMessages }: ChatProps) {
               {
                 body: {
                   conversationId,
+                  ...body,
                 },
               },
             );
 
-            if (isNewChat) {
+            if (isNewChat && api === "/api/chat") {
               setTimeout(() => {
                 router.refresh();
               }, 500);
             }
-
             setInput("");
           }}
           className='flex items-end   gap-2 my-6'
