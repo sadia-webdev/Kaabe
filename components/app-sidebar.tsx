@@ -54,10 +54,13 @@ type AppSidebarProps = {
     id: string;
     title: string;
     userId: string | null;
+    businessId: string;
     createdAt: Date;
     updatedAt: Date;
   }[];
 };
+
+
 
 export function AppSidebar({ user, conversations }: AppSidebarProps) {
   const pathname = usePathname();
